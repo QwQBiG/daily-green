@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "repository": "OWNER/REPOSITORY",
+  "author_name": "YOUR-GITHUB-LOGIN",
+  "author_email": "ACCOUNT-ID+YOUR-GITHUB-LOGIN@users.noreply.github.com",
+  "reviewer": "YOUR-GITHUB-LOGIN",
+  "timezone": "UTC",
+  "start_date": null,
+  "review_enabled": false
+}

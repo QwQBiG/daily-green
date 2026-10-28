@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+__pycache__/
+*.py[cod]
+# Private instance identity and local tools
+.greenhouse.local.json
+.greenhouse.local.json.*
+node_modules/

@@ -1,0 +1,45 @@
+name: Daily green
+
+on:
+  schedule:
+    - cron: '17 10 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: daily-green-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: vars.GREENHOUSE_ENABLED == 'true' && !github.event.repository.is_template && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GREENHOUSE_CONFIG_JSON: ${{ vars.GREENHOUSE_CONFIG }}
+    steps:
+      - name: Check out your instance
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Update daily records
+        run: |
+          previous_head="$(git rev-parse HEAD)"
+          python3 -B scripts/daily_green.py --fast > "$RUNNER_TEMP/daily-green-result.json"
+          cat "$RUNNER_TEMP/daily-green-result.json"
+          if [ "$previous_head" != "$(git rev-parse HEAD)" ]; then
+            git push origin HEAD:main
+          fi
+      - name: Show record and plant card
+        continue-on-error: true
+        run: python3 -B scripts/report_status.py "$RUNNER_TEMP/daily-green-result.json"
+      - name: Optional automated consistency review
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_TOKEN: ${{ secrets.GREENHOUSE_REVIEW_TOKEN }}
+        run: python3 -B scripts/daily_review.py
