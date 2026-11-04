@@ -364,7 +364,9 @@ test("daily scavenger clues guide the player to three discoveries without storag
     const hint=page.el("treasure-result").textContent.match(/往(前|后)翻 (\d+) 天/);
     assert.ok(hint,"a bounded clue should offer a direction and distance");
     const date=Core.shiftDate(page.el("plant-date").value,(hint[1]==="前"?-1:1)*Number(hint[2]));
-    page.select(date);
+    assert.equal(button.textContent,"去看看 →");
+    button.click();
+    assert.equal(page.el("plant-date").value,date);
     assert.ok(page.el("treasure-list").children[i].classList.contains("done"));
   }
   assert.equal(page.el("treasure-progress").textContent,"3 / 3 已发现");
