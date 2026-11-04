@@ -1,94 +1,93 @@
 # 配置与运行
 
-建议把公开模板当作源码，在自己的专用私有实例里运行自动化。需要 Git、Python 3、GitHub CLI，以及对该实例的管理权限；浏览器打开温室不需要这些工具。
+想让 Daily Green 每天运行，先用公开模板建一个自己的私有实例。下面的步骤需要 Git、Python 3、已登录的 GitHub CLI，以及实例的管理权限。只想给过去几天生成提交，可以直接去[按年份归档](#按年份归档)。想逛温室的话，打开 [`garden/index.html`](../garden/index.html) 即可。
 
 ## 1. 创建实例
 
-在模板仓库选择 **Use this template → Create a new repository**，将可见性设为 **Private**，默认分支使用 `main`。克隆实例并进入目录。不要用 fork 或复制旧 `.git` 的方式迁入个人历史。
+在模板仓库点击 **Use this template → Create a new repository**，将可见性设为 **Private**，默认分支用 `main`。建好后，克隆自己的实例并进入它的目录。用模板建仓即可避开从 fork 或旧 `.git` 带入个人历史。
 
-也可由已授权的 Agent 使用 GitHub CLI 创建实例，见 [Agent 启动文档](AGENT_START.md)。
+也可以让已获授权的 Agent 代为建库。[Agent 启动文档](AGENT_START.md)
 
 ## 2. 预览与应用
 
-确认 `gh` 已按正常流程登录，不读取或输出 CLI token。替换以下命令中的目标仓库和时区：
+在 GitHub CLI 登录账号后，把命令中的 `OWNER/REPOSITORY` 换成你的实例仓库。登录凭据由 CLI 管理。`UTC` 可以换成自己的 IANA 时区。
 
 ```sh
 python3 scripts/setup.py --repository OWNER/REPOSITORY --timezone UTC
 python3 scripts/setup.py --repository OWNER/REPOSITORY --timezone UTC --apply
 ```
 
-不带 `--apply` 时只显示计划，不修改文件或 GitHub。应用时会核对仓库归属、专用实例、默认分支和配置；从已登录账号的公开 login/id 生成 noreply 身份，避免误用设备邮箱。
+先运行第一条，核对仓库和起始日期。它只读检查，不写文件或更改 GitHub 设置。确认后再运行带 `--apply` 的第二条。脚本会检查仓库归属、默认分支和实例配置，用已登录账号的公开 login 和 id 生成 GitHub noreply 提交身份。
 
-本地配置 `.greenhouse.local.json` 被 Git 忽略。GitHub Variable `GREENHOUSE_CONFIG` 保存实例运行设置，`GREENHOUSE_ENABLED` 是启用开关。配置不是 token，但可能含使用者自己选择的账号、noreply 邮箱和日期，不应反向复制到公开模板。
+配置默认从当天开始。如果希望日常任务从更早的日期开始，在预览和应用命令中加 `--start YYYY-MM-DD`。首次配置时，起始日期最多往回选 366 天。这会补齐装饰性提交，review 只在实际运行当天发生。更早的日期可以单独[按年份归档](#按年份归档)。
 
-默认从当天开始。若本人明确希望补齐较早日期，可追加 `--start YYYY-MM-DD`；首次配置时，起点不得早于今天 366 天。这会生成装饰性历史提交，不代表过去真实工作，也不会补写过去的 review。不要把自己实例的起始日期写进公共示例。
+配置默认启用可选 review。如果只要每日提交，预览和应用时都加 `--no-review`。以后重跑配置也保留这个参数。
 
-配置工具默认启用可选 review。只想运行每日提交时，在 dry-run 和应用命令中都追加 `--no-review`；以后重跑配置时也应保留该选项，避免重新启用 review。
+本地配置写在 Git 忽略的 `.greenhouse.local.json`。GitHub 上的 `GREENHOUSE_CONFIG` Variable 保存运行配置，`GREENHOUSE_ENABLED` 控制任务是否启用。运行配置可能含账号、noreply 邮箱和起始日期，留在自己的实例里即可。
+
+## 3. 可选自动一致性 review
+
+机器人通过仓库的 `GITHUB_TOKEN` 创建并合并当天的快照 PR。你的受限 token 只提交一条标明自动生成的 `COMMENTED` review，用于记录一致性检查。它不会代表你批准 PR。
+
+如果想启用这项功能，请在 GitHub 自己创建一个 fine-grained personal access token。
+
+1. 在 **Resource owner** 选实例所属账号。在 **Repository access** 只选这个实例仓库。
+2. 在 **Repository permissions** 为 **Pull requests** 选 **Read and write**。**Metadata** 保持默认只读。
+3. 选好有效期，生成 token。到实例仓库的 **Settings → Secrets and variables → Actions → New repository secret**，填入名称 `GREENHOUSE_REVIEW_TOKEN`，由你粘贴并保存。
+4. 到期后，用新 token 更新同名 Secret。token 只放在 GitHub Secret 中，别发给 Agent、写入源码或 `.env`，也别把现有 CLI 凭据复制进去。
+
+缺少 Secret 时，任务会在发起 review 请求前跳过。应用配置时脚本会打开实例允许 Actions 创建 PR 的开关。如果创建或合并受阻，按组织策略、现有分支保护和仓库权限排查。保留仓库已有的保护规则。
+
+## 4. 日常行为与运行时间
+
+- 每天 **10:17 UTC** 运行一个任务，最长 5 分钟。GitHub 的定时任务可能延迟或漏跑。
+- 配置里的时区决定哪天算“今天”。运行时刻由工作流里的 UTC cron 决定，换算成当地时间时可能受夏令时影响。想换运行时间，调整工作流里的那一条 cron。
+- 每天按日期生成 2–6 次提交。同一天重跑会跳过已经完成的部分。漏跑后，下次会补齐提交，review 只在实际运行当天执行。
+- review 失败时，已推送的提交会保留。运行摘要里的提示会说明原因，凭据内容不会出现在提示里。
+- 定时任务负责实际生成提交。项目没有推送检查、PR 检查、夜间巡检或定时测试。想看温室和植物卡，直接打开温室页面即可。
+
+如果想马上执行首日任务，在 **Actions → Daily green → Run workflow** 手动运行一次，也可以等下次定时任务。想在主页显示私有贡献，可在个人主页的 **Contribution settings** 打开 **Private contributions**。提交是否计入、何时出现，取决于 GitHub 的统计。
+
+## 5. 暂停与恢复
+
+在实例的 **Settings → Secrets and variables → Actions → Variables**，把 `GREENHOUSE_ENABLED` 改为 `false`，任务就会跳过。也可以运行这条命令。
+
+```sh
+gh variable set GREENHOUSE_ENABLED --repo OWNER/REPOSITORY --body false
+```
+
+改回 `true` 后，下次任务会按配置补齐漏掉的提交。过去的日期仍只补提交。想连定时触发记录也一起停掉，可以在 Actions 页面禁用该工作流。原有记录和 Git 历史可以留在仓库里。
 
 ## 按年份归档
 
-在模板目录运行下面的命令，先预览，再加 `--apply` 创建或更新自己的私有归档。无需先手动建库。
+假设你想给 2020 年的闰日和 6 月第一周做一份归档，每个选中的日期生成两次提交。在模板目录运行第一条，核对日期、提交数和目标仓库后，再执行第二条。脚本会按需创建私有仓库。
 
 ```sh
 python3 scripts/archive_year.py 2020 --days 02-29 06-01..06-07 --commits-per-day 2
 python3 scripts/archive_year.py 2020 --days 02-29 06-01..06-07 --commits-per-day 2 --apply
 ```
 
-- 年份可选 1970 至当前年。必须明确选择单日或日期段，支持混选，重叠日期只算一次。日期按 UTC 计算，当年可选到今天。
-- 默认仓库名是 `daily-green-2020`（随年份变化），可用 `--name` 自定名称。以后对同一仓库补漏掉的日期，或提高某天的提交数，使用同样的年份和仓库名即可。
-- `--commits-per-day` 可设 1–20，省略时按日期生成 2–6 次。这个数是本次所选日期的目标下限，已达到目标的日期会跳过。
-- 归档在本地生成并推送到归档的默认分支，无需 Actions 或 review。提交日期使用所选日期。GitHub 仓库的创建日期是实际创建当天，贡献图显示由 GitHub 决定。
+- 可以选 1970 年至当前年。日期按 UTC 计算，选当年时可以选到今天。用 `MM-DD` 选一天，用 `MM-DD..MM-DD` 选一段，两种写法可以混用。重叠的日期只算一次。
+- 仓库名默认随年份变化，例如 `daily-green-2020`。想换名字就加 `--name`。以后想给同一个归档补日期或提高某天的提交数，继续用原来的年份和仓库名。
+- `--commits-per-day` 可设为 1–20。省略时按日期生成 2–6 次。脚本只补到目标次数，已经达到目标的日期会跳过。
 
-## 3. 可选自动一致性 review
-
-review 流程使用两个身份：仓库 `GITHUB_TOKEN` 代表 bot 创建并合并当天快照 PR；本人受限 token 只提交明确标注自动化的 `COMMENTED` review。它不是批准，也不是人工审核。
-
-本人在 GitHub 创建 fine-grained personal access token：
-
-1. Resource owner 选择实例所属账号，Repository access 只选择实例仓库。
-2. Repository permissions 选择 **Pull requests: Read and write**；Metadata 保持默认只读。
-3. 设置自己接受的有效期，生成后直接进入实例仓库 **Settings → Secrets and variables → Actions → New repository secret**。
-4. 名称填写 `GREENHOUSE_REVIEW_TOKEN`，由本人粘贴并保存 token。
-
-不要把 token 发给 Agent、写入源码或 `.env`，也不要上传当前 CLI 的宽权限凭据。到期时由本人更新同名 Secret。未配置 Secret 时 review 会在网络操作前跳过。
-
-实例需允许 Actions 创建 PR；应用配置会设置相关开关。组织策略、分支保护和仓库权限仍可能阻止自动创建或合并，不应通过取消既有保护来强行运行。
-
-## 4. 日常行为与运行时间
-
-- 每天 **10:17 UTC** 只有一个实际任务，最长 5 分钟；GitHub 定时触发可能延迟或漏跑。
-- 配置的时区决定“今天”的边界。cron 固定按 UTC，夏令时也可能改变对应的本地时间；需要其他时刻时，自行调整工作流中的单条 cron。
-- 每天按日期生成 2–6 次提交；同日重复运行跳过已完成部分。漏跑后，下次任务补齐提交，但 review 仅发生在实际运行当天。
-- 提交成功后，可选 review 失败不会抹去已推送的提交；具体原因以运行摘要中的脱敏 warning 为准。
-- 没有 `push`/PR 检查、额外夜间检查或定时测试。不要为了查看植物卡单独启动 Actions。
-
-需要首日结果时，可以自己在 **Actions → Daily green → Run workflow** 运行一次实际任务；否则等待正常计划。不要把一次未触发的配置核对描述成“贡献已计入”。
-
-如果需要在个人主页显示私有贡献，可自行在 GitHub 个人主页的 Contribution settings 打开 **Private contributions**。贡献是否计入及显示时间由 GitHub 决定。
-
-## 5. 暂停与恢复
-
-在实例 **Settings → Secrets and variables → Actions → Variables**，将 `GREENHOUSE_ENABLED` 设为 `false` 即可暂停 job。也可使用：
-
-```sh
-gh variable set GREENHOUSE_ENABLED --repo OWNER/REPOSITORY --body false
-```
-
-设置为 `true` 恢复；恢复后的实际任务会按配置补齐提交，不会补写历史 review。若要连定时触发记录也停止，可在 Actions 页面禁用该工作流。不要删除个人记录或重写历史来达到暂停目的。
+归档在本地生成，随后推送到归档仓库的默认分支，整个过程无需 Actions 或 review。所选日期写入提交，仓库的创建日期由 GitHub 按实际创建时间记录。贡献图的显示以 GitHub 为准。
 
 ## 常见情况
 
 | 现象 | 先检查什么 |
 | --- | --- |
-| job 被跳过 | 是否在实例的 `main`，以及 `GREENHOUSE_ENABLED` 是否为 `true` |
-| 记录日期不合预期 | `GREENHOUSE_CONFIG` 中的时区与起始日期；不要在已有记录后随意改起始日期 |
-| review 跳过 | review 是否启用、Secret 是否存在及是否过期 |
-| PR 无法创建或合并 | Actions 创建 PR 开关、组织策略、分支保护和实例权限 |
-| 主页暂时没显示 | noreply 身份、默认分支、私有贡献显示设置和 GitHub 统计延迟 |
-| 配置命令中断 | 修复提示的问题后重跑配置；不要手动开启开关掩盖未完成配置 |
+| 任务被跳过 | 当前分支是否是实例的 `main`，以及 `GREENHOUSE_ENABLED` 是否为 `true` |
+| 记录日期和预想不一样 | 查看 `GREENHOUSE_CONFIG` 的时区和起始日期。已有记录后保留原起始日期 |
+| review 被跳过 | review 是否启用，Secret 是否存在或过期 |
+| PR 无法创建或合并 | Actions 创建 PR 的开关、组织策略、分支保护和仓库权限 |
+| 主页暂时没显示 | noreply 身份、默认分支、私有贡献显示开关，以及 GitHub 是否仍在统计 |
+| 配置命令中断 | 先修复命令提示的问题，再重新运行配置。由配置脚本打开启用开关 |
 
-本项目不调用付费 AI。Actions 额度和计费取决于用户自己的账号、实例可见性及实际使用；不要假定所有情况下永远免费。
+项目运行无需付费 AI。Actions 的额度和费用随账号套餐、仓库可见性和实际用量而定。
 
 ## 初始化中断后的恢复
 
-如果初始化提交已经创建，但 push 失败或响应丢失，配置工具会保守停止，调度开关仍为 `false`。让 Agent 先 `git fetch origin main`，检查 `git status` 与 `git log origin/main..HEAD`。只有确认本地超前的提交是预期的单文件初始化记录时，才普通 push 后重跑 setup；如果远端已经收到提交，正常同步跟踪分支后再运行即可。不要 force push、删除个人记录，或直接开启调度掩盖错误。
+如果已生成初始化提交，但推送失败或没收到响应，脚本会停止，`GREENHOUSE_ENABLED` 仍为 `false`。先运行 `git fetch origin main`，再用 `git status` 和 `git log origin/main..HEAD` 检查本地和远端的差别。
+
+如果本地只多出预期的单文件初始化提交，可以正常推送后重跑配置。如果远端已经收到提交，先同步跟踪分支，再重跑配置。请保留已有记录和历史，使用普通推送，避免 force push。确认初始化完成后重跑配置，由脚本打开启用开关。
