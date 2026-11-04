@@ -354,5 +354,32 @@ test("visitor storage validates dates and unique kinds and stays playable when s
   }
 });
 
+test("daily scavenger clues guide the player to three discoveries without storage or network", () => {
+  const page=boot(); const before=page.writes;
+  assert.equal(page.el("treasure-list").children.length,3);
+  for(let i=0;i<3;i++) {
+    const button=page.el("treasure-list").children[i].children[2];
+    if(button.disabled) continue;
+    button.click();
+    const hint=page.el("treasure-result").textContent.match(/往(前|后)翻 (\d+) 天/);
+    assert.ok(hint,"a bounded clue should offer a direction and distance");
+    const date=Core.shiftDate(page.el("plant-date").value,(hint[1]==="前"?-1:1)*Number(hint[2]));
+    page.select(date);
+    assert.ok(page.el("treasure-list").children[i].classList.contains("done"));
+  }
+  assert.equal(page.el("treasure-progress").textContent,"3 / 3 已发现");
+  assert.match(page.el("treasure-result").textContent,/寻宝完成/);
+  assert.equal(page.writes,before);
+  assert.notEqual(boot().el("treasure-progress").textContent,"3 / 3 已发现");
+});
+
+test("treasure clues respect calendar boundaries", () => {
+  const page=boot({search:"?date=0001-01-01"});
+  const pending=page.el("treasure-list").children.find(tile=>!tile.children[2].disabled);
+  assert.ok(pending);pending.children[2].click();
+  assert.match(page.el("treasure-result").textContent,/往后翻 \d+ 天/);
+  assert.equal(page.writes,0);
+});
+
 assert.ok(boots.every(page => page.requests === 0), "a controller operation attempted network access");
 console.log(`Garden controller: ${scenarios} DOM-model integration scenarios passed; zero network calls. Browser layout/visual behavior was not tested.`);
