@@ -60,12 +60,15 @@ class SelectedDaysTests(unittest.TestCase):
 class ArchiveCommandTests(unittest.TestCase):
     identity = {"type": "User", "login": LOGIN, "id": 1000}
     target = f"{LOGIN}/garden-1970"
-    arguments = ["1970", "--days", "01-01", "01-03", "--commits-per-day", "3", "--name", "garden-1970"]
+    arguments = ["1970", "--days", "01-01", "01-03", "--name", "garden-1970"]
 
-    def run_command(self, *extra):
+    def run_command(self, *extra, commits_per_day=3):
+        arguments = list(self.arguments)
+        if commits_per_day is not None:
+            arguments.extend(["--commits-per-day", str(commits_per_day)])
         output, errors = StringIO(), StringIO()
         with redirect_stdout(output), redirect_stderr(errors):
-            result = archive.main([*self.arguments, *extra])
+            result = archive.main([*arguments, *extra])
         return result, output.getvalue(), errors.getvalue()
 
     def test_preview_uses_only_reads_and_reports_selected_count(self):
@@ -78,6 +81,22 @@ class ArchiveCommandTests(unittest.TestCase):
         self.assertEqual(github.call_args_list, [call("user"), call(f"repos/{self.target}", allow_missing=True)])
         build.assert_not_called()
         publish.assert_not_called()
+
+    def test_preview_accepts_large_custom_counts_and_keeps_the_default_cadence(self):
+        for count, expected in ((233, 466), (None, 7)):
+            with self.subTest(commits_per_day=count), \
+                    patch.object(archive, "github", side_effect=[self.identity, None]):
+                result, output, errors = self.run_command(commits_per_day=count)
+                self.assertEqual(result, 0, errors)
+                self.assertIn(f"2 distinct day(s), {expected} new commit(s)", output)
+
+    def test_nonpositive_counts_fail_before_github_access(self):
+        for count in (0, -1):
+            with self.subTest(commits_per_day=count), patch.object(archive, "github") as github:
+                result, _, errors = self.run_command(commits_per_day=count)
+                self.assertEqual(result, 1)
+                self.assertIn("--commits-per-day", errors)
+                github.assert_not_called()
 
     def test_apply_creates_a_private_repository_then_uses_its_default_branch(self):
         metadata = {
@@ -208,6 +227,30 @@ class ArchiveGitTests(unittest.TestCase):
         self.assertEqual(
             self.manifest(directory, updated)["days"],
             {old.isoformat(): 1, leap.isoformat(): 3, later.isoformat(): 2},
+        )
+
+    def test_large_backfill_preserves_existing_commits_and_stays_on_the_selected_utc_day(self):
+        day = date(2001, 12, 31)
+        original_count, target_count = 20, 721
+        directory, base = self.build("large", day.year, {day: original_count})
+        head = archive.build_history(directory, day.year, {day: target_count}, LOGIN, EMAIL, base=base)
+        self.assertEqual(git(directory, "rev-parse", f"{head}~{target_count - original_count}"), base)
+
+        rows = git(directory, "log", "--reverse", "--format=%aI%x00%cI", head).splitlines()
+        self.assertEqual(len(rows), target_count)
+        timestamps = []
+        for row in rows:
+            author, committer = row.split("\x00")
+            self.assertEqual(author, committer)
+            timestamp = datetime.fromisoformat(author.replace("Z", "+00:00"))
+            self.assertEqual((timestamp.date(), timestamp.utcoffset()), (day, timedelta(0)))
+            timestamps.append(timestamp.time().isoformat())
+        self.assertEqual(timestamps[:original_count], [f"12:{index:02d}:00" for index in range(1, 21)])
+        self.assertEqual(timestamps[-2:], ["23:59:59", "23:59:59"])
+        self.assertEqual(self.manifest(directory, head)["days"], {day.isoformat(): target_count})
+        self.assertEqual(
+            archive.build_history(directory, day.year, {day: target_count}, LOGIN, EMAIL, base=head),
+            head,
         )
 
     def test_publish_respects_default_branch_and_can_retry_same_head(self):

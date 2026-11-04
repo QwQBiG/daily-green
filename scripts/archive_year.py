@@ -15,7 +15,6 @@ from tempfile import TemporaryDirectory, TemporaryFile
 from activity_dates import days_between, planned_count
 
 FIRST_YEAR = 1970
-MAX_COMMITS = 20
 MANIFEST = "data/activity.json"
 LOCAL_REF = "refs/heads/archive"
 LOGIN = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?")
@@ -122,7 +121,7 @@ def read_manifest(directory, year, base):
     for key, count in data["days"].items():
         day = date.fromisoformat(key)
         if (day.isoformat() != key or day.year != year or day > datetime.now(timezone.utc).date()
-                or type(count) is not int or not 1 <= count <= MAX_COMMITS):
+                or type(count) is not int or count < 1):
             raise ArchiveError("The existing archive manifest contains invalid dates or counts.")
     return data["days"]
 
@@ -143,8 +142,11 @@ def build_history(directory, year, targets, login, email, base=None):
         first = True
         for day, target in sorted(targets.items()):
             key = day.isoformat()
+            noon = int(datetime.combine(day, time(12), timezone.utc).timestamp())
+            day_end = int(datetime.combine(day, time(23, 59, 59), timezone.utc).timestamp())
             for sequence in range(days.get(key, 0) + 1, target + 1):
-                timestamp = int(datetime.combine(day, time(12, sequence), timezone.utc).timestamp())
+                # Preserve the original minute spacing without spilling into the next day.
+                timestamp = min(noon + sequence * 60, day_end)
                 identity = f"{login} <{email}> {timestamp} +0000"
                 stream.write(f"commit {LOCAL_REF}\nauthor {identity}\ncommitter {identity}\n".encode())
                 write_data(stream, f"chore: archive daily green {key} #{sequence}\n")
@@ -217,15 +219,15 @@ def main(argv=None):
     parser.add_argument("--days", nargs="+", required=True, metavar="MM-DD",
                         help="Selected dates or inclusive MM-DD..MM-DD ranges")
     parser.add_argument("--commits-per-day", type=int, metavar="N",
-                        help=f"Minimum commits for each selected day (1–{MAX_COMMITS}); default is 2–6 by date")
+                        help="Positive commit target for each selected day; default is 2–6 by date")
     parser.add_argument("--name", help="Private repository name; default daily-green-YEAR")
     parser.add_argument("--apply", action="store_true", help="Create or update the archive; otherwise preview")
     args = parser.parse_args(argv)
     try:
         days = selected_days(args.year, args.days, datetime.now(timezone.utc).date())
         count = args.commits_per_day
-        if count is not None and not 1 <= count <= MAX_COMMITS:
-            raise ArchiveError(f"--commits-per-day must be between 1 and {MAX_COMMITS}.")
+        if count is not None and count < 1:
+            raise ArchiveError("--commits-per-day must be a positive integer.")
         name = args.name or f"daily-green-{args.year}"
         if not NAME.fullmatch(name) or name.lower().endswith(".git"):
             raise ArchiveError("Use a GitHub repository name, without an owner or .git suffix.")
