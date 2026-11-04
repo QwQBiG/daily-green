@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from datetime import date, datetime, time, timedelta
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -14,6 +13,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from activity_dates import days_between, planned_count
 from greenhouse_config import load_config, require_automation
 
 
@@ -41,20 +41,6 @@ def git(*args: str, check: bool = True, env: dict[str, str] | None = None) -> su
         ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", *args],
         check=check, text=True, capture_output=True, env=env,
     )
-
-
-def planned_count(day: date) -> int:
-    digest = hashlib.sha256(f"daily-green-v1:{day.isoformat()}".encode()).digest()
-    return 2 + int.from_bytes(digest[:8], "big") % 5
-
-
-def days_between(start: date, through: date):
-    day = start
-    while day <= through:
-        yield day
-        if day == through:
-            break
-        day += timedelta(days=1)
 
 
 def commit_timestamp(day: date, sequence: int) -> str:

@@ -51,7 +51,7 @@ def seed(repo, config=SAMPLE, ledger=True):
     git(repo, "config", "commit.gpgsign", "false")
     git(repo, "config", "core.hooksPath", os.devnull)
     (repo / "scripts").mkdir()
-    for filename in ("daily_green.py", "greenhouse_config.py", "report_status.py"):
+    for filename in ("activity_dates.py", "daily_green.py", "greenhouse_config.py", "report_status.py"):
         shutil.copyfile(ROOT / "scripts" / filename, repo / "scripts" / filename)
     (repo / "README.md").write_text("Disposable template fixture.\n")
     (repo / ".gitignore").write_text("__pycache__/\n*.py[cod]\ndata/.daily-green-*.tmp\n")

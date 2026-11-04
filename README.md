@@ -14,6 +14,7 @@ Daily Green 是一份可自行部署的通用模板，内含 Tiny Greenhouse 小
 | --- | --- |
 | 让 Agent 帮你配置专用私有仓库 | [复制启动提示词](docs/AGENT_START.md) |
 | 自己按步骤配置 | [配置与运行指南](docs/SETUP.md) |
+| 为指定年份和日期生成历史提交 | [按年份归档](docs/SETUP.md#按年份归档) |
 | 只玩温室，或放进自己的网站 | [温室与网站嵌入](docs/EMBED.md) |
 | 了解数据保存与凭据边界 | [隐私说明](PRIVACY.md) |
 

@@ -4,6 +4,12 @@
 
 > 阅读本项目的 AGENTS.md、docs/SETUP.md 和 docs/EMBED.md。为我创建一个专用私有实例，从今天开始运行每日装饰性提交，并准备可选的自动一致性 review。使用已认证账号的 GitHub noreply 邮箱，先 dry-run 再应用配置。只操作这个新实例，不改其他项目；不读取或上传现有 CLI token，不向我要 token。需要 review 凭据时，引导我自行在 GitHub 创建并保存为 GREENHOUSE_REVIEW_TOKEN。不要启动额外的 Actions 检查。最后告诉我正常运行时间、如何暂停，以及怎样把温室放进自己的网站。
 
+如果只想归档过去的指定日期，可以这样告诉 Agent：
+
+> 为我创建 2020 年的私有归档，只补 2 月 29 日和 6 月 1 日到 7 日，每天两次。用 `scripts/archive_year.py` 先预览再应用。其他日期由我之后选择。
+
+年份、日期和每天的提交数都可以换。用法见[按年份归档](SETUP.md#按年份归档)。
+
 ## Agent 执行路线
 
 ### 1. 确认来源和目标

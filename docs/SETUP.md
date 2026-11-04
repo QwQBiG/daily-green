@@ -25,6 +25,20 @@ python3 scripts/setup.py --repository OWNER/REPOSITORY --timezone UTC --apply
 
 配置工具默认启用可选 review。只想运行每日提交时，在 dry-run 和应用命令中都追加 `--no-review`；以后重跑配置时也应保留该选项，避免重新启用 review。
 
+## 按年份归档
+
+在模板目录运行下面的命令，先预览，再加 `--apply` 创建或更新自己的私有归档。无需先手动建库。
+
+```sh
+python3 scripts/archive_year.py 2020 --days 02-29 06-01..06-07 --commits-per-day 2
+python3 scripts/archive_year.py 2020 --days 02-29 06-01..06-07 --commits-per-day 2 --apply
+```
+
+- 年份可选 1970 至当前年。必须明确选择单日或日期段，支持混选，重叠日期只算一次。日期按 UTC 计算，当年可选到今天。
+- 默认仓库名是 `daily-green-2020`（随年份变化），可用 `--name` 自定名称。以后对同一仓库补漏掉的日期，或提高某天的提交数，使用同样的年份和仓库名即可。
+- `--commits-per-day` 可设 1–20，省略时按日期生成 2–6 次。这个数是本次所选日期的目标下限，已达到目标的日期会跳过。
+- 归档在本地生成并推送到归档的默认分支，无需 Actions 或 review。提交日期使用所选日期。GitHub 仓库的创建日期是实际创建当天，贡献图显示由 GitHub 决定。
+
 ## 3. 可选自动一致性 review
 
 review 流程使用两个身份：仓库 `GITHUB_TOKEN` 代表 bot 创建并合并当天快照 PR；本人受限 token 只提交明确标注自动化的 `COMMENTED` review。它不是批准，也不是人工审核。
