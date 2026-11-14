@@ -221,6 +221,8 @@ test("collecting six species updates the album and album/chip controls select sa
   assert.equal(page.document.activeElement, page.el("plant-date"));
   page.document.activeElement = null;
   page.el("saved-dates").children.find(node => node.textContent === "2025-11-15").click(); shown(page, "2025-11-15");
+  assert.equal(page.el("saved-dates").children.find(node => node.textContent === "2025-11-15").getAttribute("aria-current"), "date");
+  assert.equal(page.el("saved-dates").children.filter(node => node.getAttribute("aria-current") === "date").length, 1);
   assert.equal(page.document.activeElement, page.el("plant-date"));
 });
 
