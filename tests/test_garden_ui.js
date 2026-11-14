@@ -219,7 +219,9 @@ test("collecting six species updates the album and album/chip controls select sa
   assert.ok(page.el("album").children.every(node => node.tagName === "BUTTON" && node.classList.contains("unlocked")));
   page.el("album").children[0].click(); shown(page, "2025-11-18");
   assert.equal(page.document.activeElement, page.el("plant-date"));
+  page.document.activeElement = null;
   page.el("saved-dates").children.find(node => node.textContent === "2025-11-15").click(); shown(page, "2025-11-15");
+  assert.equal(page.document.activeElement, page.el("plant-date"));
 });
 
 test("moonlight discovery updates the room, card, saved album mark and seed consistently", () => {
@@ -367,6 +369,7 @@ test("daily scavenger clues guide the player to three discoveries without storag
     assert.equal(button.textContent,"去看看 →");
     button.click();
     assert.equal(page.el("plant-date").value,date);
+    assert.equal(page.document.activeElement,page.el("plant-date"));
     assert.ok(page.el("treasure-list").children[i].classList.contains("done"));
   }
   assert.equal(page.el("treasure-progress").textContent,"3 / 3 已发现");
