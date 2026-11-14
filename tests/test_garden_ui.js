@@ -164,6 +164,8 @@ function shown(harness, day) {
   assert.equal(harness.el("leaf-meter").children.filter(node => node.classList.contains("filled")).length, card.leaves);
   assert.match(harness.el("plant-display").innerHTML, /<svg\b/);
   assert.equal(harness.el("scene").classList.contains("moonlight"), card.moonlight);
+  assert.equal(harness.el("specimen-date").textContent, day);
+  assert.equal(harness.el("specimen-date").getAttribute("datetime"), day);
   return card;
 }
 
@@ -201,11 +203,13 @@ test("saving survives a new controller instance and toggling removes the date", 
   const page = boot(); page.click("save-button");
   assert.equal(page.el("saved-count").textContent, "1");
   assert.equal(page.el("save-button").getAttribute("aria-pressed"), "true");
+  assert.equal(page.el("save-button").textContent, "从窗台收起");
   assert.equal(JSON.parse(page.data.get(STORE)).dates[0], "2026-10-26");
   const reopened = boot({ data: page.data }); shown(reopened, "2026-10-26");
   assert.equal(reopened.el("saved-count").textContent, "1");
   reopened.click("save-button"); assert.equal(reopened.el("saved-count").textContent, "0");
   assert.equal(reopened.el("save-button").getAttribute("aria-pressed"), "false");
+  assert.equal(reopened.el("save-button").textContent, "放上窗台 ＋");
   assert.deepEqual(JSON.parse(reopened.data.get(STORE)).dates, []);
 });
 
@@ -329,6 +333,7 @@ test("greeting collects four unique visitor stamps without altering plant storag
     page.select(day); const before = page.writes; page.click("visitor-button");
     assert.equal(page.writes,before+1); assert.match(page.el("visitor-note").textContent,/^「.+」$/);
     assert.ok(page.el("visitor-note").classList.contains("revealed"));
+    assert.equal(page.document.activeElement,page.el("visitor-note"));
     assert.ok(page.el("visitor-button").classList.contains("greeted"));
     page.click("visitor-button"); assert.equal(page.writes,before+1);
   }
@@ -340,7 +345,7 @@ test("greeting collects four unique visitor stamps without altering plant storag
   const firstKind=Core.atmosphereForDate(savedDay).visitor;
   const slot=["snail","moth","ladybird","cat"].indexOf(firstKind);
   reopened.el("guest-stamps").children[slot].click();shown(reopened,savedDay);
-  assert.equal(reopened.document.activeElement,reopened.el("visitor-button"));
+  assert.equal(reopened.document.activeElement,reopened.el("visitor-note"));
   assert.ok(reopened.el("visitor-note").classList.contains("revealed"));assert.equal(reopened.writes,0);
 });
 
