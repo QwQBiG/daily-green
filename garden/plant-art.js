@@ -25,15 +25,15 @@
     var species = typeof card.species === 'string' && card.species.length < 100 ? card.species : names[kind];
     var label = escapeText(species + ' · ' + (moon ? '月光叶' : '晨绿叶'));
     var p = moon ? {
-      stem: '#81908e', dark: '#9caaa1', leaf: '#c2cdbb', light: '#e0e4c4', vein: '#f8f2d9',
-      flower: '#e8dfb6', center: '#f5e8b8', soil: '#887666', clay: '#ebe4f0', rim: '#f7eff4', ink: '#6d776a'
+      stem: '#648a7a', dark: '#638a78', leaf: '#91b59c', light: '#d8dfaa', vein: '#f6f3d3',
+      flower: '#e0d6a2', center: '#efdfab', soil: '#65543f', clay: '#c5b5ce', rim: '#e3d5e4', ink: '#527362'
     } : {
-      stem: '#6c8762', dark: '#89a778', leaf: '#aac58d', light: '#cad9a4', vein: '#edf2d2',
-      flower: '#eac776', center: '#f6e4a7', soil: '#93816a', clay: '#f4d2bf', rim: '#ffead8', ink: '#6c785c'
+      stem: '#486b41', dark: '#3d6c48', leaf: '#6d9756', light: '#acc47b', vein: '#e5e8b2',
+      flower: '#d9a249', center: '#e8c774', soil: '#5b4732', clay: '#c68b64', rim: '#e3b68b', ink: '#355e40'
     };
 
     function face(x, y, scale, sleepy) {
-      return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')" fill="none" stroke="#725d50" stroke-width="2.4" stroke-linecap="round">' +
+      return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')" fill="none" stroke="#634b3b" stroke-width="2.4" stroke-linecap="round">' +
         (sleepy ? '<path d="M-12-1q3 4 6 0m12 0q3 4 6 0"/>' : '<path d="M-9-2v3m18-3v3"/>') +
         '<path d="M-3 5q3 3 6 0" stroke-width="1.7"/><g fill="#df9e94" stroke="none" opacity=".7"><ellipse cx="-15" cy="5" rx="4" ry="2.2"/><ellipse cx="15" cy="5" rx="4" ry="2.2"/></g></g>';
     }
@@ -44,8 +44,11 @@
 
     function leaf(x, y, scale, angle, fill, mirrored) {
       return '<g transform="translate(' + x + ' ' + y + ') rotate(' + angle + ') scale(' + (mirrored ? -scale : scale) + ' ' + scale + ')">' +
-        '<path d="M0 0C-8-19-26-23-37-12C-36 3-17 10 0 0Z" fill="' + fill + '" stroke="' + p.ink + '" stroke-width="1.5"/>' +
-        (mini ? '' : '<path d="M-3-1Q-18-9-32-11M-15-6L-19-15M-23-9L-30-4" fill="none" stroke="' + p.vein + '" stroke-opacity=".38" stroke-width=".8" stroke-linecap="round"/>') + '</g>';
+        '<path d="M0 0C-8-19-26-23-37-12C-36 3-17 10 0 0Z" fill="' + fill + '" stroke="' + p.ink + '" stroke-width=".9"/>' +
+        '<path d="M-2-2C-13-17-25-20-34-12C-24-14-12-5-2-2Z" fill="' + p.light + '" opacity=".46"/>' +
+        '<path d="M-1 0C-12 6-27 5-34-5C-21 0-11-1-1 0Z" fill="#1d4936" opacity=".2"/>' +
+        '<path d="M-3-1Q-18-9-32-11" fill="none" stroke="' + p.vein + '" stroke-opacity=".58" stroke-width=".85" stroke-linecap="round"/>' +
+        (mini ? '' : '<path d="M-15-6L-19-15M-23-9L-30-4" fill="none" stroke="' + p.vein + '" stroke-opacity=".28" stroke-width=".65" stroke-linecap="round"/>') + '</g>';
     }
 
     function sparkle(x, y, size) {
@@ -77,8 +80,10 @@
     function cactus() {
       var art = '<path d="M134 191H108Q78 191 78 161V145Q78 132 91 132Q104 132 104 145V159Q104 169 115 169H134Z" fill="' + p.dark + '" stroke="' + p.ink + '" stroke-width="1.8"/>' +
         '<path d="M170 164H187Q217 164 217 134V119Q217 106 204 106Q191 106 191 119V132Q191 141 180 141H170Z" fill="' + p.leaf + '" stroke="' + p.ink + '" stroke-width="1.8"/>' +
-        '<rect x="127" y="80" width="47" height="151" rx="23.5" fill="' + p.leaf + '" stroke="' + p.ink + '" stroke-width="1.8"/>' +
-        '<path d="M143 91Q138 142 140 218M158 91Q165 146 160 220" fill="none" stroke="' + p.light + '" stroke-width="2.2" stroke-opacity=".57"/>';
+        '<rect x="127" y="80" width="47" height="151" rx="23.5" fill="' + p.leaf + '" stroke="' + p.ink + '" stroke-width="1.2"/>' +
+        '<path d="M153 81Q175 83 174 108V224H162Q166 148 153 81Z" fill="#2e5942" opacity=".28"/>' +
+        '<path d="M143 89Q132 107 136 181" fill="none" stroke="' + p.light + '" stroke-width="7" stroke-opacity=".53" stroke-linecap="round"/>' +
+        '<path d="M143 91Q138 142 140 218M158 91Q165 146 160 220" fill="none" stroke="' + p.light + '" stroke-width="1.5" stroke-opacity=".62"/>';
       if (!mini) {
         for (var y = 112; y < 216; y += 22) {
           art += '<path d="M128 ' + y + 'l-4-3m5 6-5 2M173 ' + (y + 5) + 'l5-2m-5 5 4 3" fill="none" stroke="' + p.vein + '" stroke-width="1" stroke-linecap="round"/>';
@@ -95,7 +100,7 @@
       }
       return stem('M151 229C153 188 145 145 150 102', 4) +
         leaf(150, 190, 1.37, -12, p.dark) + leaf(150, 165, 1.24, -2, p.leaf, true) + petals +
-        '<circle cx="150" cy="100" r="24" fill="' + p.center + '" stroke="#b89763" stroke-width="1.8"/>' + face(150, 99, .8, false);
+        '<circle cx="150" cy="100" r="24" fill="' + p.center + '" stroke="#b89049" stroke-width="1.2"/><path d="M130 91a22 22 0 0 1 30-11" fill="none" stroke="#f8e5ac" stroke-width="4" stroke-linecap="round"/><path d="M169 88a22 22 0 0 1-5 29" fill="none" stroke="#b48c48" stroke-width="3" stroke-linecap="round" opacity=".28"/>' + face(150, 99, .8, false);
     }
 
     function bell(x, y, scale) {
@@ -146,15 +151,23 @@
 
     var foliage = [mint, clover, cactus, sunflower, lily, mimosa][kind]();
     var growth = .82 + (leaves - 2) * .045;
-    var pot = '<g class="plant-pot"><ellipse cx="150" cy="287" rx="56" ry="7" fill="#897463" opacity=".13"/>' +
-      '<path d="M104 231H196L188 271Q186 283 173 284H127Q114 283 112 271Z" fill="' + p.clay + '" stroke="#a88570" stroke-width="2.1" stroke-linejoin="round"/>' +
-      '<path d="M117 241 122 268Q123 275 129 276" fill="none" stroke="#fff5e6" stroke-width="4" stroke-linecap="round" opacity=".65"/>' +
-      '<path d="M183 245 178 274" stroke="#d8aa91" stroke-width="2" stroke-linecap="round" opacity=".45"/>' +
-      '<ellipse cx="150" cy="231" rx="49" ry="12" fill="' + p.rim + '" stroke="#a88570" stroke-width="2"/>' +
-      '<ellipse cx="150" cy="228" rx="41" ry="7" fill="' + p.soil + '"/>' +
-      (mini ? '' : '<g fill="#e1c7a6"><circle cx="127" cy="228" r="1.3"/><circle cx="170" cy="228" r="1.2"/><circle cx="141" cy="225" r="1"/></g>') +
-      face(150, 256, .85, kind === 4 || moon) +
-      '<path d="M107 235Q150 248 193 235" fill="none" stroke="' + p.rim + '" stroke-width="4" stroke-linecap="round"/></g>';
+    var pot = '<g class="plant-pot"><ellipse cx="150" cy="291" rx="67" ry="11" fill="#203c2b" opacity=".1"/><ellipse cx="150" cy="288" rx="53" ry="5" fill="#283c2a" opacity=".15"/>' +
+      '<ellipse cx="150" cy="282" rx="58" ry="11" fill="' + (moon ? '#9b8aa8' : '#a76b49') + '"/>' +
+      '<ellipse cx="150" cy="279" rx="58" ry="9" fill="' + (moon ? '#c8b9cc' : '#d2a078') + '"/>' +
+      '<ellipse cx="150" cy="278" rx="45" ry="5" fill="' + (moon ? '#89798f' : '#956342') + '" opacity=".43"/>' +
+      '<path d="M103 231H197L188 271Q186 283 173 285H127Q114 283 112 271Z" fill="' + p.clay + '" stroke="' + (moon ? '#938099' : '#9b6446') + '" stroke-width="1.2" stroke-linejoin="round"/>' +
+      '<path d="M108 238H191L183 269Q180 279 168 280H131Q120 279 118 268Z" fill="' + (moon ? '#ddcfdf' : '#dba67e') + '" opacity=".75"/>' +
+      '<path d="M179 237H195L187 271Q184 282 171 284H165Q177 271 179 237Z" fill="' + (moon ? '#7e6c8b' : '#885135') + '" opacity=".25"/>' +
+      '<path d="M114 240 121 266Q123 273 130 275" fill="none" stroke="' + (moon ? '#f5eaf5' : '#ffe8bd') + '" stroke-width="6" stroke-linecap="round" opacity=".56"/>' +
+      '<path d="M128 278Q151 284 174 277" fill="none" stroke="' + (moon ? '#b3a2bc' : '#bd7f57') + '" stroke-width="1.6" opacity=".7"/>' +
+      (mini ? '' : '<g fill="#fff0c9" opacity=".23"><circle cx="136" cy="242" r=".8"/><circle cx="165" cy="248" r=".7"/><circle cx="176" cy="256" r=".9"/><circle cx="132" cy="267" r=".9"/><circle cx="160" cy="272" r=".7"/></g>') +
+      '<ellipse cx="150" cy="231" rx="52" ry="13" fill="' + p.rim + '" stroke="' + (moon ? '#a18ca7' : '#b37a52') + '" stroke-width="1.2"/>' +
+      '<path d="M101 231Q150 213 199 231" fill="none" stroke="' + (moon ? '#f4e8f2' : '#fae0b8') + '" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<ellipse cx="150" cy="229" rx="44" ry="8" fill="' + p.soil + '"/>' +
+      '<path d="M108 230Q150 214 192 230Q154 220 108 230Z" fill="#30291d" opacity=".38"/>' +
+      '<g fill="#a0875b" opacity=".6"><circle cx="124" cy="229" r="1.2"/><circle cx="171" cy="228" r="1.1"/><circle cx="140" cy="225" r=".8"/><circle cx="160" cy="233" r="1"/></g>' +
+      face(150, 256, .72, kind === 4 || moon) +
+      '<path d="M101 233Q150 249 199 233" fill="none" stroke="' + p.rim + '" stroke-width="4" stroke-linecap="round"/></g>';
 
     return '<svg xmlns="http://www.w3.org/2000/svg" class="plant-art" viewBox="0 0 300 320" width="300" height="320" role="img" aria-label="' + label + '" data-species="' + kind + '">' +
       '<title>' + label + '</title><desc>装饰性的盆栽插画；植物长势由这一天固定的日历种子决定。</desc>' +
